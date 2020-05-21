@@ -116,7 +116,7 @@ def lenet_model():
 
     with tf.Session() as sess:
         sess.run(init)
-        # todo:这里还需要改一下，数据集不一样
+        # todo:这里经过了修改，数据集不一样
         X_test = x_test.reshape(x_test.shape[0], 784).astype('float32') / 255.0
         Y_test = tf.one_hot(y_test, 10)
         Y_test_one_hot = sess.run(Y_test)
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     learning_rate = 0.001
     display_step = 10
     test_step = 150
-    # 数据集不够大，不能设置10000 ,数据集只有60000张，batch_size 为 128 最大只能460左右
+    # 数据集不够大，不能设置10000 ,数据集只有60000张，batch_size 为 128 ,那么num_steps最大只能460左右
     epoches = 10
     num_steps = 460
     dropout = 0.5
