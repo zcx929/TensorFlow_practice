@@ -38,7 +38,6 @@ def conv(x,filter_height,filter_width,num_filters,stride_y,stride_x,name,padding
         conv = convolve(x,weights)
         # 在多组的情况下，分割输入和权重
     else:
-        #todo:???
         # 将输入和权重分开并分别卷积
         input_groups = tf.split(axis=3,num_or_size_splits=groups,value=x)
         weight_group = tf.split(axis=3,num_or_size_splits=groups,value=weights)
@@ -58,7 +57,6 @@ def conv(x,filter_height,filter_width,num_filters,stride_y,stride_x,name,padding
 def fc(x,num_in,num_out,name,relu=True):
     '''定义全连接层'''
     with tf.variable_scope(name) as scope:
-        #todo ???
         weights = tf.get_variable('weights',shape=[num_in,num_out],trainable=True)
         biases = tf.get_variable('biases',shape=[num_out],trainable=True)
 
@@ -96,70 +94,70 @@ class AlexNet(object):
         else:
             self.WEIGHTS_PATH = weights_path
 
-        def create(self):
-            # 第一层 ：conv(w ReLu) -> Lrn -> Pool
-            conv1 = conv(self.X,11,11,96,4,4,padding='VALID',name='conv1')
-            norm1 = lrn(conv1,2,1e-04,0.75,name='norm1')
-            pool1 = max_pool(norm1,3,3,2,2,padding='VALID',name='pool1')
+    def create(self):
+        # 第一层 ：conv(w ReLu) -> Lrn -> Pool
+        conv1 = conv(self.X,11,11,96,4,4,padding='VALID',name='conv1')
+        norm1 = lrn(conv1,2,1e-04,0.75,name='norm1')
+        pool1 = max_pool(norm1,3,3,2,2,padding='VALID',name='pool1')
 
-            # 第二层 ：conv(w ReLu) -> Lrn -> Pool with 2 groups
-            conv2 = conv(pool1,5,5,256,1,1,groups=2,name='conv2')
-            norm2 = lrn(conv2,2,1e-04,0.75,name='norm2')
-            pool2 = max_pool(norm2,3,3,2,2,padding='VALID',name='pool2')
+        # 第二层 ：conv(w ReLu) -> Lrn -> Pool with 2 groups
+        conv2 = conv(pool1,5,5,256,1,1,groups=2,name='conv2')
+        norm2 = lrn(conv2,2,1e-04,0.75,name='norm2')
+        pool2 = max_pool(norm2,3,3,2,2,padding='VALID',name='pool2')
 
-            # 第三层：conv(w ReLu)
-            conv3 = conv(pool2,3,3,384,1,1,name='conv3')
+        # 第三层：conv(w ReLu)
+        conv3 = conv(pool2,3,3,384,1,1,name='conv3')
 
-            # 第四层：conv(w Relu) 分成两组
-            conv4 = conv(conv3,3,3,384,1,1,groups=2,name='conv4')
+        # 第四层：conv(w Relu) 分成两组
+        conv4 = conv(conv3,3,3,384,1,1,groups=2,name='conv4')
 
-            # 第五层：conv(w ReLu) -> Pool 分成两组
-            conv5 = conv(conv4,3,3,256,1,1,groups=2,name='conv5')
-            pool5 = max_pool(conv5,3,3,2,2,padding='VALID',name='pool5')
+        # 第五层：conv(w ReLu) -> Pool 分成两组
+        conv5 = conv(conv4,3,3,256,1,1,groups=2,name='conv5')
+        pool5 = max_pool(conv5,3,3,2,2,padding='VALID',name='pool5')
 
-            # 第六层：Flatten -> FC (w ReLu) -> Dropout
-            flattened = tf.reshape(pool5,[-1,6*6*256])
-            fc6 = fc(flattened,6*6*256,4096,name='fc6')
-            dropout6 = dropout(fc6,self.KEEP_PROB)
+        # 第六层：Flatten -> FC (w ReLu) -> Dropout
+        flattened = tf.reshape(pool5,[-1,6*6*256])
+        fc6 = fc(flattened,6*6*256,4096,name='fc6')
+        dropout6 = dropout(fc6,self.KEEP_PROB)
 
-            # 第7层：FC(w ReLu) -> Dropout
-            fc7 = fc(dropout6,4096,4096,name='fc7')
-            dropout7 = dropout(fc7,self.KEEP_PROB)
+        # 第7层：FC(w ReLu) -> Dropout
+        fc7 = fc(dropout6,4096,4096,name='fc7')
+        dropout7 = dropout(fc7,self.KEEP_PROB)
 
-            # 第8层：FC and 返回未标记的激活
-            self.fc8 = fc(dropout7,4096,self.NUM_CLASSES,relu=False,name='fc8')
+        # 第8层：FC and 返回未标记的激活
+        self.fc8 = fc(dropout7,4096,self.NUM_CLASSES,relu=False,name='fc8')
 
 
-        def load_initial_weights(self,session):
+    def load_initial_weights(self,session):
 
-            # 加载权重
-            weights_dict = np.load(self.WEIGHTS_PATH,encoding='bytes').item()
+        # 加载权重
+        weights_dict = np.load(self.WEIGHTS_PATH,encoding='bytes').item()
 
-            # 在weights_dict中存储的所有图层名上循环
-            for op_name in weights_dict:
-                # 检查层是否需要从头开始训练
-                if op_name not in self.SKIP_LAYER:
-                    with tf.variable_scope(op_name,reuse=True):
+        # 在weights_dict中存储的所有图层名上循环
+        for op_name in weights_dict:
+            # 检查层是否需要从头开始训练
+            if op_name not in self.SKIP_LAYER:
+                with tf.variable_scope(op_name,reuse=True):
 
-                        # 为相应的tf变量分配权重/偏差
-                        for data in weights_dict[op_name]:
+                    # 为相应的tf变量分配权重/偏差
+                    for data in weights_dict[op_name]:
 
-                            # 偏差
-                            if len(data.shape == 1):
-                                var = tf.get_variable('biases',trainable=False)
-                                session.run(var.assign(data))
+                        # 偏差
+                        if len(data.shape == 1):
+                            var = tf.get_variable('biases',trainable=False)
+                            session.run(var.assign(data))
 
-                            # 权重
-                            else:
-                                var = tf.get_variable('weights',trainable=False)
-                                session.run(var.assign(data))
+                        # 权重
+                        else:
+                            var = tf.get_variable('weights',trainable=False)
+                            session.run(var.assign(data))
 
 '''
     在上述代码中，我们利用了之前定义的各个组件封装了前向计算过程，从http://www.cs.toronto.edu/~guerzhoy/tf_alexnet/上导入
 预训练好的模型权重，这样一来，我们就将AlexNet基本搭建好了
 '''
 
-#todo：未完待续，输入什么数据集试试好呢？
+#todo：未完待续，还没有输入数据集进行测试
 
 
 
