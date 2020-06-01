@@ -106,7 +106,7 @@ def flower_model(X_train,y_train):
     return model
 
 model = flower_model(X_train,y_train)
-model.evaluate(X_test,y_test,verbose=0)
+model.evaluate(X_test,y_test,verbose=1)
 
 
 
