@@ -52,6 +52,7 @@ print('[INFO] loading dataset......')
 
 X_train = [cv2.cvtColor(cv2.resize(i,(ishape,ishape)),cv2.COLOR_GRAY2BGR) for i in X_train]
 X_test = [cv2.cvtColor(cv2.resize(i,(ishape,ishape)),cv2.COLOR_GRAY2BGR) for i in X_test]
+# np.newaxis 在使用和功能上等价于 None
 X_train = np.concatenate([arr[np.newaxis] for arr in X_train]).astype('float32')
 X_test = np.concatenate([arr[np.newaxis] for arr in X_test]).astype('float32')
 # 归一化
